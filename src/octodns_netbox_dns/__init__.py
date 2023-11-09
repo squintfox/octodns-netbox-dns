@@ -65,7 +65,6 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
     _api: pynetbox.core.api.Api
     # log: logging.Logger
-    _nb_view: pynb_resp.Record | None | False
     _ttl: int
 
     def __init__(
@@ -84,27 +83,25 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         )
         super(NetBoxDNSSource, self).__init__(id)
         self._api = pynetbox.core.api.Api(url, token)
-        self._nb_view = self._get_view(view) if view else view
+        self._nb_view = {} if view is False else self._get_view(view)
         self._ttl = ttl
         self.replace_duplicates = replace_duplicates
 
-    def _get_view(self, view: str) -> pynb_resp.Record:
-        nb_view = self._api.plugins.netbox_dns.views.get(name=view)
+    def _get_view(self, view: str | None) -> dict[str, int | str]:
+        if view is None:
+            return {"view": "null"}
+
+        nb_view: pynb_resp.Record = self._api.plugins.netbox_dns.views.get(name=view)
         if nb_view is None:
             raise ValueError(f"dns view: '{view}' has not been found")
-        self.log.debug(f"found {self._nb_view.name} {self._nb_view.id}")
+        self.log.debug(f"found {nb_view.name} {nb_view.id}")
 
-        return nb_view
+        return {"view_id": nb_view.id}
 
-    def _get_nb_zone(self, name: str, view: pynb_resp.Record | None) -> pynb_resp.Record:
+    def _get_nb_zone(self, name: str, view: dict[str, str | int]) -> pynb_resp.Record:
         """Given a zone name and a view name, look it up in NetBox.
         Raises: pynetbox.RequestError if declared view is not existant"""
-        query_params = {name: name[:-1]}
-        if view:
-            query_params.update({"view_id": view.id})
-        if view is None:
-            query_params.update({"view_id": "null"})
-
+        query_params = {name: name[:-1], **view}
         nb_zone = self._api.plugins.netbox_dns.zones.get(**query_params)
 
         return nb_zone
