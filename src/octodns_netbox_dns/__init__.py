@@ -1,6 +1,5 @@
 """OctoDNS provider for NetboxDNS."""
 import logging
-from pprint import pprint
 
 import dns.rdata
 import octodns.provider.base
@@ -14,15 +13,21 @@ import pynetbox.core.response as pynb_resp
 class NetBoxDNSSource(octodns.provider.base.BaseProvider):
     """
     NetBoxDNS source for OctoDNS.
-    
+
     config:
+        class: octodns_netbox_dns.NetBoxDNSSource
+        # Netbox url
+        url: "https://some-url"
+        # Netbox api token
+        token: env/NETBOX_API_KEY
         # Provider 'view' configuration is optional; however, it still can
-        # be declared as "null" or with an empty value. 
-        view: null
+        # be declared as "null" or with an empty value. If you don't want to
+        # set a view in the query, set the value to "false".
+        view: false
         # When records sourced from multiple providers, allows provider
         # to replace entries comming from the previous one.
         # Implementation matches YamlProvider's 'populate_should_replace'
-        replace_duplicates: False
+        replace_duplicates: false
     """
 
     SUPPORTS_GEO: bool = False
@@ -60,11 +65,17 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
     _api: pynetbox.core.api.Api
     # log: logging.Logger
-    _nb_view: pynb_resp.Record | None
+    _nb_view: pynb_resp.Record | None | False
     _ttl: int
 
     def __init__(
-        self, id: int, url: str, token: str, view: str | None = None, ttl=3600, replace_duplicates: bool = False,
+        self,
+        id: int,
+        url: str,
+        token: str,
+        view: str | None | False = False,
+        ttl=3600,
+        replace_duplicates: bool = False,
     ):
         """Initialize the NetboxDNSSource."""
         self.log = logging.getLogger(f"NetboxDNSSource[{id}]")
@@ -73,30 +84,34 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         )
         super(NetBoxDNSSource, self).__init__(id)
         self._api = pynetbox.core.api.Api(url, token)
-        self._nb_view = None
-        if view is not None:
-            self._nb_view = self._api.plugins.netbox_dns.views.get(name=view)
-            if self._nb_view is None:
-                raise ValueError(f"dns view: '{view}' has not been found")
-            self.log.debug(f"found {self._nb_view.name} {self._nb_view.id}")
+        self._nb_view = self._get_view(view) if view else view
         self._ttl = ttl
         self.replace_duplicates = replace_duplicates
 
+    def _get_view(self, view: str) -> pynb_resp.Record:
+        nb_view = self._api.plugins.netbox_dns.views.get(name=view)
+        if nb_view is None:
+            raise ValueError(f"dns view: '{view}' has not been found")
+        self.log.debug(f"found {self._nb_view.name} {self._nb_view.id}")
+
+        return nb_view
+
     def _get_nb_zone(self, name: str, view: pynb_resp.Record | None) -> pynb_resp.Record:
         """Given a zone name and a view name, look it up in NetBox.
-           Raises: pynetbox.RequestError if declared view is not existant"""
-        view_id = view.id if view else "null"
-        nb_zone = self._api.plugins.netbox_dns.zones.get(name=name[:-1], view_id=view_id)
+        Raises: pynetbox.RequestError if declared view is not existant"""
+        query_params = {name: name[:-1]}
+        if view:
+            query_params.update({"view_id": view.id})
+        if view is None:
+            query_params.update({"view_id": "null"})
+
+        nb_zone = self._api.plugins.netbox_dns.zones.get(**query_params)
 
         return nb_zone
 
-    def populate(
-        self, zone: octodns.zone.Zone, target: bool = False, lenient: bool = False
-    ):
-        """Get all of the records of a zone from NetBox and add them to the OctoDNS zone."""
-        self.log.debug(
-            f"populate: name={zone.name}, target={target}, lenient={lenient}"
-        )
+    def populate(self, zone: octodns.zone.Zone, target: bool = False, lenient: bool = False):
+        """Get all the records of a zone from NetBox and add them to the OctoDNS zone."""
+        self.log.debug(f"populate: name={zone.name}, target={target}, lenient={lenient}")
 
         records = {}
 
@@ -104,12 +119,10 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         if not nb_zone:
             self.log.error(f"Zone '{zone.name[:-1]}' not found in view: '{self._nb_view}'")
             raise LookupError
-        
+
         nb_records = self._api.plugins.netbox_dns.records.filter(zone_id=nb_zone.id)
         for nb_record in nb_records:
-            self.log.debug(
-                f"{nb_record.name!r} {nb_record.type!r} {nb_record.value!r}"
-            )
+            self.log.debug(f"{nb_record.name!r} {nb_record.type!r} {nb_record.value!r}")
             name = nb_record.name
             if name == "@":
                 name = ""
@@ -217,15 +230,12 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
     def _apply(self, plan: octodns.provider.plan.Plan):
         """Apply the changes to the NetBox DNS zone."""
-        self.log.debug(
-            f"_apply: zone={plan.desired.name}, len(changes)={len(plan.changes)}"
-        )
+        self.log.debug(f"_apply: zone={plan.desired.name}, len(changes)={len(plan.changes)}")
 
         nb_zone = self._get_nb_zone(plan.desired.name, view=self._nb_view)
 
         for change in plan.changes:
             match change:
-
                 case octodns.record.Create():
                     name = change.new.name
                     if name == "":
@@ -265,9 +275,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                         case octodns.record.ValueMixin():
                             existing = {repr(change.existing.value)[1:-1]}
                         case octodns.record.ValuesMixin():
-                            existing = set(
-                                map(lambda v: repr(v)[1:-1], change.existing.values)
-                            )
+                            existing = set(map(lambda v: repr(v)[1:-1], change.existing.values))
                         case _:
                             raise ValueError
 
@@ -277,13 +285,10 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                                 self.log.debug(
                                     f"{nb_record.id} {nb_record.name} {nb_record.type} {nb_record.value} {value}"
                                 )
-                                self.log.debug(
-                                    f"{nb_record.url} {nb_record.endpoint.url}"
-                                )
+                                self.log.debug(f"{nb_record.url} {nb_record.endpoint.url}")
                                 nb_record.delete()
 
                 case octodns.record.Update():
-
                     name = change.existing.name
                     if name == "":
                         name = "@"
@@ -298,9 +303,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                         case octodns.record.ValueMixin():
                             existing = {repr(change.existing.value)[1:-1]}
                         case octodns.record.ValuesMixin():
-                            existing = set(
-                                map(lambda v: repr(v)[1:-1], change.existing.values)
-                            )
+                            existing = set(map(lambda v: repr(v)[1:-1], change.existing.values))
                         case _:
                             raise ValueError
 

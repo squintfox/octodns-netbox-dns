@@ -1,17 +1,233 @@
-[tool.poetry]
-name = "octodns-netbox-dns"
-version = "0.1.0"
-description = ""
-authors = ["Jeffrey C. Ollie <jeff@ocjtech.us>"]
-
-[tool.poetry.dependencies]
-python = "^3.11"
-octodns = "^1.2.1"
-pynetbox = "^7.2.0"
-dnspython = "^2.4.2"
-
-[tool.poetry.dev-dependencies]
-
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling>=1.18", "hatch-regex-commit>=0.0.3"]
+build-backend = "hatchling.build"
+
+[project]
+name = "octodns_netbox_dns"
+description = "octodns netbox-dns provider"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dynamic = ["version"]
+authors = [
+    { name = "Jeffrey C. Ollie", email = "" },
+    { name = "Ivan Schaller", email = "ivan@schaller.sh" }
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = ["pynetbox==7.2.0", "dnspython ==2.4.2"]
+
+[project.urls]
+Homepage = "https://github.com/olofvndrhr/octodns-netbox-dns"
+History = "https://github.com/olofvndrhr/octodns-netbox-dns/commits/master"
+Tracker = "https://github.com/olofvndrhr/octodns-netbox-dns/issues"
+Source = "https://github.com/olofvndrhr/octodns-netbox-dns"
+
+[tool.hatch.version]
+source = "regex_commit"
+path = "src/octodns_netbox_dns/__about__.py"
+tag_sign = false
+
+[tool.hatch.build]
+ignore-vcs = true
+
+[tool.hatch.build.targets.sdist]
+packages = ["src/octodns_netbox_dns"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/octodns_netbox_dns"]
+
+### envs
+
+[tool.hatch.envs.default]
+dependencies = [
+    "pytest>=7.0.0",
+    "coverage>=6.3.1",
+    "mypy>=1.5.1",
+    "ruff>=0.1.3",
+]
+
+[tool.hatch.envs.default.scripts]
+python = "3.11"
+test = "pytest --verbose {args:tests}"
+test-cov = ["coverage erase", "coverage run -m pytest --verbose {args:tests}"]
+cov-report = ["- coverage combine", "coverage report", "coverage xml"]
+cov = ["test-cov", "cov-report"]
+
+[tool.hatch.envs.lint]
+python = "3.11"
+detached = true
+dependencies = [
+    "mypy>=1.5.1",
+    "ruff>=0.1.3",
+]
+
+[tool.hatch.envs.lint.scripts]
+typing = "mypy --non-interactive --install-types {args:src/octodns_netbox_dns}"
+style = ["ruff check --diff {args:.}", "ruff format --check --diff {args:.}"]
+fmt = ["ruff format {args:.}", "ruff --fix {args:.}", "style"]
+all = ["style", "typing"]
+
+### black
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+### pyright
+
+[tool.pyright]
+typeCheckingMode = "basic"
+pythonVersion = "3.11"
+reportUnnecessaryTypeIgnoreComment = true
+reportShadowedImports = true
+reportUnusedExpression = true
+reportMatchNotExhaustive = true
+# venvPath         = "."
+# venv             = "venv"
+
+### ruff
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+indent-width = 4
+fix = true
+show-fixes = true
+ignore-init-module-imports = true
+respect-gitignore = true
+src = ["src", "tests"]
+exclude = [
+    ".direnv",
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".nox",
+    ".venv",
+    "venv",
+    "__pypackages__",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+[tool.ruff.lint]
+select = [
+    "A",
+    "ARG",
+    "B",
+    "C",
+    "DTZ",
+    "E",
+    "EM",
+    "F",
+    "FBT",
+    "I",
+    "ICN",
+    "ISC",
+    "N",
+    "PLC",
+    "PLE",
+    "PLR",
+    "PLW",
+    "Q",
+    "RUF",
+    "S",
+    "T",
+    "TID",
+    "UP",
+    "W",
+    "YTT",
+]
+ignore = ["E501", "D103", "D100", "D102", "PLR2004", "D403", "FBT003", "ISC001"]
+unfixable = ["F401"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["D104"]
+"__about__.py" = ["D104", "F841"]
+"tests/**/*" = ["PLR2004", "S101", "TID252"]
+
+[tool.ruff.pyupgrade]
+keep-runtime-typing = true
+
+[tool.ruff.isort]
+lines-after-imports = 2
+known-first-party = ["octodns_netbox_dns"]
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.pylint]
+max-branches = 24
+max-returns = 12
+max-statements = 100
+max-args = 15
+allow-magic-value-types = ["str", "bytes", "complex", "float", "int"]
+
+[tool.ruff.mccabe]
+max-complexity = 15
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[tool.ruff.pycodestyle]
+max-doc-length = 100
+
+### mypy
+
+[tool.mypy]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+follow_imports = "normal"
+ignore_missing_imports = true
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+warn_no_return = false
+warn_unused_ignores = true
+
+### coverage
+
+[tool.coverage.run]
+source_pkgs = ["octodns_netbox_dns", "tests"]
+branch = true
+parallel = true
+omit = ["src/octodns_netbox_dns/__about__.py"]
+
+[tool.coverage.paths]
+testproj = ["src/octodns_netbox_dns", "*/src/octodns_netbox_dns"]
+tests = ["tests", "*/tests"]
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "if self.debug",
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if __name__ == .__main__.:",
+    # Don't complain about abstract methods, they aren't run:
+    "@(abc.)?abstractmethod",
+    "no cov",
+    "if TYPE_CHECKING:",
+]
+# ignore_errors = true
