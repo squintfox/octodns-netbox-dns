@@ -226,6 +226,8 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
             )
             zone.add_record(record, lenient=lenient, replace=self.replace_duplicates)
 
+        self.log.info(f"populate: found {len(zone.records)} records for zone {zone.name}")
+
     def _apply(self, plan: octodns.provider.plan.Plan):
         """Apply the changes to the NetBox DNS zone."""
         self.log.debug(f"_apply: zone={plan.desired.name}, len(changes)={len(plan.changes)}")
