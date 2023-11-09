@@ -5,13 +5,10 @@ description = ""
 authors = ["Jeffrey C. Ollie <jeff@ocjtech.us>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-octodns = "^0.9.17"
-
-# use fork of pynetbox until pkg_resources runtime dependency is removed
-pynetbox = { git = "https://github.com/jcollie/pynetbox", rev = "f051085a4051a98565c08b9646d5b2d69fe1739e" }
-
-dnspython = "^2.2.1"
+python = "^3.11"
+octodns = "^1.2.1"
+pynetbox = "^7.2.0"
+dnspython = "^2.4.2"
 
 [tool.poetry.dev-dependencies]
 
