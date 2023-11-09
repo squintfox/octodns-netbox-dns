@@ -1,5 +1,6 @@
 """OctoDNS provider for NetboxDNS."""
 import logging
+from typing import Literal
 
 import dns.rdata
 import octodns.provider.base
@@ -72,7 +73,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         id: int,
         url: str,
         token: str,
-        view: str | None | False = False,
+        view: str | None | Literal[False] = False,
         ttl=3600,
         replace_duplicates: bool = False,
     ):
