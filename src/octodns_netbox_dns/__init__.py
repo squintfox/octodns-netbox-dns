@@ -201,7 +201,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                     continue
 
                 case "SPF" | "TXT":
-                    value = rcd_value
+                    value = rcd_value.replace(";", r"\;")
 
                 case "SRV":
                     value = {
