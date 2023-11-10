@@ -62,7 +62,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         """Initialize the NetboxDNSSource."""
         self.log = logging.getLogger(f"NetboxDNSSource[{id}]")
         self.log.debug(
-            f"__init__: id={id}, url={url}, view={view}, replace_duplicates={replace_duplicates}"
+            f"__init__: id={id}, url={url}, view={view}, replace_duplicates={replace_duplicates}, make_absolute={make_absolute}"
         )
         super(NetBoxDNSSource, self).__init__(id)
         self._api = pynetbox.core.api.Api(url, token)
