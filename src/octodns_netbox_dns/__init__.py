@@ -121,24 +121,28 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         nb_records = self._api.plugins.netbox_dns.records.filter(zone_id=nb_zone.id)
         for nb_record in nb_records:
             self.log.debug(f"{nb_record.name!r} {nb_record.type!r} {nb_record.value!r}")
-            name = nb_record.name
-            if name == "@":
-                name = ""
 
-            nb_zone_default_ttl = nb_zone.default_ttl
+            rcd_name: str = nb_record.name if nb_record.name != "@" else ""
+            rcd_value: str = nb_record.value if nb_record.value != "@" else nb_record.zone.name
+
+            # make CNAME record absolute
+            if nb_record.type == "CNAME" and rcd_value[-1] != ".":
+                rcd_value = rcd_value + "."
+
             if nb_record.ttl:
                 nb_ttl = nb_record.ttl
             elif nb_record.type == "NS":
                 nb_ttl = nb_zone.soa_refresh
             else:
-                nb_ttl = nb_zone_default_ttl
+                nb_ttl = nb_zone.default_ttl
+
             data = {
-                "name": name,
+                "name": rcd_name,
                 "type": nb_record.type,
                 "ttl": nb_ttl,
                 "values": [],
             }
-            rdata = dns.rdata.from_text("IN", nb_record.type, nb_record.value)
+            rdata = dns.rdata.from_text("IN", nb_record.type, rcd_value)
             match rdata.rdtype.name:
                 case "A" | "AAAA":
                     value = rdata.address
@@ -197,7 +201,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                     continue
 
                 case "SPF" | "TXT":
-                    value = nb_record.value
+                    value = rcd_value
 
                 case "SRV":
                     value = {
@@ -210,9 +214,9 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                 case _:
                     raise ValueError
 
-            if (name, nb_record.type) not in records:
-                records[(name, nb_record.type)] = data
-            records[(name, nb_record.type)]["values"].append(value)
+            if (rcd_name, nb_record.type) not in records:
+                records[(rcd_name, nb_record.type)] = data
+            records[(rcd_name, nb_record.type)]["values"].append(value)
 
         for data in records.values():
             if len(data["values"]) == 1:
