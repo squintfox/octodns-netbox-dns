@@ -11,32 +11,7 @@ import pynetbox.core.api
 import pynetbox.core.response as pynb_resp
 
 
-def make_absolute(value: str) -> str:
-    if value[-1] == ".":
-        return value
-    return value + "."
-
-
 class NetBoxDNSSource(octodns.provider.base.BaseProvider):
-    """
-    NetBoxDNS source for OctoDNS.
-
-    config:
-        class: octodns_netbox_dns.NetBoxDNSSource
-        # Netbox url
-        url: "https://some-url"
-        # Netbox api token
-        token: env/NETBOX_API_KEY
-        # Provider 'view' configuration is optional; however, it still can
-        # be declared as "null" or with an empty value. If you don't want to
-        # set a view in the query, set the value to "false".
-        view: false
-        # When records sourced from multiple providers, allows provider
-        # to replace entries comming from the previous one.
-        # Implementation matches YamlProvider's 'populate_should_replace'
-        replace_duplicates: false
-    """
-
     SUPPORTS_GEO: bool = False
     SUPPORTS_DYNAMIC: bool = False
     SUPPORTS: set[str] = {
@@ -82,6 +57,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         view: str | None | Literal[False] = False,
         ttl=3600,
         replace_duplicates: bool = False,
+        make_absolute: bool = False,
     ):
         """Initialize the NetboxDNSSource."""
         self.log = logging.getLogger(f"NetboxDNSSource[{id}]")
@@ -93,6 +69,12 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         self._nb_view = {} if view is False else self._get_view(view)
         self._ttl = ttl
         self.replace_duplicates = replace_duplicates
+        self.make_absolute = make_absolute
+
+    def _make_absolute(self, value: str) -> str:
+        if not self.make_absolute or value[-1] == ".":
+            return value
+        return value + "."
 
     def _get_view(self, view: str | None) -> dict[str, int | str]:
         if view is None:
@@ -150,7 +132,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                     value = rdata.address
 
                 case "CNAME":
-                    value = make_absolute(rdata.target.to_text())
+                    value = self._make_absolute(rdata.target.to_text())
 
                 case "DNAME" | "NS" | "PTR":
                     value = rdata.target.to_text()
@@ -181,7 +163,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                 case "MX":
                     value = {
                         "preference": rdata.preference,
-                        "exchange": make_absolute(rdata.exchange.to_text()),
+                        "exchange": self._make_absolute(rdata.exchange.to_text()),
                     }
 
                 case "NAPTR":
@@ -213,7 +195,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                         "priority": rdata.priority,
                         "weight": rdata.weight,
                         "port": rdata.port,
-                        "target": make_absolute(rdata.target.to_text()),
+                        "target": self._make_absolute(rdata.target.to_text()),
                     }
 
                 case _:
