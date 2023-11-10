@@ -11,6 +11,12 @@ import pynetbox.core.api
 import pynetbox.core.response as pynb_resp
 
 
+def make_absolute(value: str) -> str:
+    if value[-1] == ".":
+        return value
+    return value + "."
+
+
 class NetBoxDNSSource(octodns.provider.base.BaseProvider):
     """
     NetBoxDNS source for OctoDNS.
@@ -125,10 +131,6 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
             rcd_name: str = nb_record.name if nb_record.name != "@" else ""
             rcd_value: str = nb_record.value if nb_record.value != "@" else nb_record.zone.name
 
-            # make CNAME record absolute
-            if nb_record.type == "CNAME" and rcd_value[-1] != ".":
-                rcd_value = rcd_value + "."
-
             if nb_record.ttl:
                 nb_ttl = nb_record.ttl
             elif nb_record.type == "NS":
@@ -147,7 +149,10 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                 case "A" | "AAAA":
                     value = rdata.address
 
-                case "CNAME" | "DNAME" | "NS" | "PTR":
+                case "CNAME":
+                    value = make_absolute(rdata.target.to_text())
+
+                case "DNAME" | "NS" | "PTR":
                     value = rdata.target.to_text()
 
                 case "CAA":
@@ -176,7 +181,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                 case "MX":
                     value = {
                         "preference": rdata.preference,
-                        "exchange": rdata.exchange.to_text(),
+                        "exchange": make_absolute(rdata.exchange.to_text()),
                     }
 
                 case "NAPTR":
@@ -208,7 +213,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                         "priority": rdata.priority,
                         "weight": rdata.weight,
                         "port": rdata.port,
-                        "target": rdata.target.to_text(),
+                        "target": make_absolute(rdata.target.to_text()),
                     }
 
                 case _:
