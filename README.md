@@ -1,6 +1,6 @@
 # netbox-plugin-dns source for octodns
 
-> Works with https://github.com/peteeckel/netbox-plugin-dns
+> works with https://github.com/peteeckel/netbox-plugin-dns
 
 ## config
 
@@ -11,11 +11,12 @@ providers:
         # Netbox url
         # [mandatory, default=null]
         url: "https://some-url"
-        # Netbox api token
+        # Netbox API token
         # [mandatory, default=null]
         token: env/NETBOX_API_KEY
-        # View of the zone. Can be either a string (the view name) or "null"
-        # to only query zones without a view. Set to false to ignore views
+        # View of the zone. Can be either a string -> the view name
+        # "null" -> to only query zones without a view
+        # false -> to ignore views
         # [optional, default=false]
         view: false
         # When records sourced from multiple providers, allows provider
@@ -30,7 +31,7 @@ providers:
 
 ## install
 
-### via pip
+### via pip + git
 
 ```bash
 pip install octodns-netbox-dns@git+https://github.com/olofvndrhr/octodns-netbox-dns.git@main
