@@ -43,12 +43,9 @@ create_reqs:
 
 lint:
     just show_system_info
-    just test_shfmt
-    just test_shfmt
     @hatch run lint:style
     @hatch run lint:typing
 
 format:
     just show_system_info
-    just format_shfmt
     @hatch run lint:fmt

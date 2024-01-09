@@ -16,7 +16,7 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
 
     SUPPORTS_GEO = False
     SUPPORTS_DYNAMIC = False
-    SUPPORTS: frozenset = {
+    SUPPORTS: set[str] = {
         "A",
         "AAAA",
         "AFSDB",
@@ -64,7 +64,7 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
         self.log.debug(f"__init__: {id=}, {url=}, {view=}, {replace_duplicates=}, {make_absolute=}")
         super().__init__(id)
         self._api = pynetbox.core.api.Api(url, token)
-        self._nb_view = {} if view is False else self._get_view(view)
+        self._nb_view = self._get_view(view)
         self._ttl = ttl
         self.replace_duplicates = replace_duplicates
         self.make_absolute = make_absolute
@@ -74,7 +74,9 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
             return value
         return value + "."
 
-    def _get_view(self, view: str | Literal[False]) -> dict[str, int | str]:
+    def _get_view(self, view: str | None | Literal[False]) -> dict[str, int | str]:
+        if view is False:
+            return {}
         if view is None:
             return {"view": "null"}
 
