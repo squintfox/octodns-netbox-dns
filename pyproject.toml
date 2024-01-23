@@ -19,7 +19,10 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.11",
 ]
-dependencies = ["pynetbox==7.2.0", "dnspython ==2.4.2"]
+dependencies = [
+    "pynetbox>=7.2.0",
+    "dnspython>=2.4.2",
+]
 
 [project.urls]
 Homepage = "https://github.com/olofvndrhr/octodns-netbox-dns"
