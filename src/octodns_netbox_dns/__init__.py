@@ -127,7 +127,7 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
 
         return nb_zone
 
-    def _format_rdata(self, rdata: dns.Rdata, raw_value: str) -> str | dict[str, Any]:
+    def _format_rdata(self, rdata: dns.rdata.Rdata, raw_value: str) -> str | dict[str, Any]:
         """
         Format netbox record values to correct octodns record values
 
