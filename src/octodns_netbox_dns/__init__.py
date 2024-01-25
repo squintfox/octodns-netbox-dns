@@ -127,7 +127,7 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
 
         return nb_zone
 
-    def _format_rdata(self, rdata: dns.Rdata, raw_value: str) -> dict[str, Any]:
+    def _format_rdata(self, rdata: dns.Rdata, raw_value: str) -> str | dict[str, Any]:
         """
         Format netbox record values to correct octodns record values
 
@@ -213,7 +213,7 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
 
         self.log.debug(f"formatted record value={value}")
 
-        return value
+        return value  # type:ignore
 
     def _format_nb_records(self, zone: octodns.zone.Zone) -> list[dict[str, Any]]:
         """
@@ -234,8 +234,6 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
             zone_id=nb_zone.id
         )
         for nb_record in nb_records:
-            nb_record: pynetbox.core.response.Record
-
             rcd_name: str = nb_record.name if nb_record.name != "@" else ""
             raw_value: str = nb_record.value if nb_record.value != "@" else nb_record.zone.name
             rcd_type: str = nb_record.type
