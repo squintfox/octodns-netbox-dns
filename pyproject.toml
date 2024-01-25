@@ -3,7 +3,7 @@ requires = ["hatchling>=1.18", "hatch-regex-commit>=0.0.3"]
 build-backend = "hatchling.build"
 
 [project]
-name = "octodns_netbox_dns"
+name = "octodns-netbox-dns"
 description = "octodns netbox-dns provider"
 readme = "README.md"
 license = "MIT"

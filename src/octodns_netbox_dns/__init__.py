@@ -16,7 +16,7 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
 
     SUPPORTS_GEO = False
     SUPPORTS_DYNAMIC = False
-    SUPPORTS: set[str] = {
+    SUPPORTS: set[str] = {  # noqa
         "A",
         "AAAA",
         "AFSDB",
@@ -49,7 +49,7 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
 
     def __init__(
         self,
-        id: int,
+        id: int,  # noqa
         url: str,
         token: str,
         view: str | None | Literal[False] = False,
@@ -63,29 +63,49 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
         self.log = logging.getLogger(f"NetboxDNSSource[{id}]")
         self.log.debug(f"__init__: {id=}, {url=}, {view=}, {replace_duplicates=}, {make_absolute=}")
         super().__init__(id)
-        self._api = pynetbox.core.api.Api(url, token)
-        self._nb_view = self._get_view(view)
-        self._ttl = ttl
+
+        self.api = pynetbox.core.api.Api(url, token)
+        self.nb_view = self._get_view(view)
+        self.ttl = ttl
         self.replace_duplicates = replace_duplicates
         self.make_absolute = make_absolute
 
     def _make_absolute(self, value: str) -> str:
-        if not self.make_absolute or value[-1] == ".":
+        """
+        Return dns name with trailing dot to make it absolute
+
+        @param value: dns record value
+
+        @return: absolute dns record value
+        """
+        if not self.make_absolute or value.endswith("."):
             return value
-        return value + "."
+
+        absolute_value = value + "."
+        self.log.debug(f"relative={value}, absolute={absolute_value}")
+
+        return absolute_value
 
     def _get_view(self, view: str | None | Literal[False]) -> dict[str, int | str]:
+        """
+        Get the correct netbox view when requested
+
+        @param view: `False` for no view, `None` for zones without a view, else the view name
+
+        @return: the netbox view id in the netbox query format
+        """
         if view is False:
             return {}
         if view is None:
             return {"view": "null"}
 
-        nb_view: pynetbox.core.response.Record = self._api.plugins.netbox_dns.views.get(name=view)
+        nb_view: pynetbox.core.response.Record = self.api.plugins.netbox_dns.views.get(name=view)
         if nb_view is None:
             msg = f"dns view: '{view}' has not been found"
             self.log.error(msg)
             raise ValueError(msg)
-        self.log.debug(f"found {nb_view.name} {nb_view.id}")
+
+        self.log.debug(f"found view={nb_view.name}, id={nb_view.id}")
 
         return {"view_id": nb_view.id}
 
@@ -93,27 +113,40 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
         """
         Given a zone name and a view name, look it up in NetBox.
 
+        @param name: name of the dns zone
+        @param view: the netbox view id in the api query format
+
         @raise pynetbox.RequestError: if declared view is not existent
+
+        @return: the netbox dns zone object
         """
         query_params = {"name": name[:-1], **view}
-        nb_zone = self._api.plugins.netbox_dns.zones.get(**query_params)
+        nb_zone = self.api.plugins.netbox_dns.zones.get(**query_params)
+
+        self.log.debug(f"found zone={nb_zone.name}, id={nb_zone.id}")
 
         return nb_zone
 
-    def populate(self, zone: octodns.zone.Zone, target: bool = False, lenient: bool = False):
+    def populate(
+        self, zone: octodns.zone.Zone, target: bool = False, lenient: bool = False
+    ) -> None:
         """
-        Get all the records of a zone from NetBox and add them to the OctoDNS zone.
+        Get all the records of a zone from NetBox and add them to the OctoDNS zone
+
+        @param zone: octodns zone
+        @param target: when `True`, load the current state of the provider.
+        @param lenient: when `True`, skip record validation and do a "best effort" load of data.
         """
-        self.log.debug(f"populate: name={zone.name}, target={target}, lenient={lenient}")
+        self.log.info(f"populate: name={zone.name}, target={target}, lenient={lenient}")
 
         records = {}
 
-        nb_zone = self._get_nb_zone(zone.name, view=self._nb_view)
+        nb_zone = self._get_nb_zone(zone.name, view=self.nb_view)
         if not nb_zone:
-            self.log.error(f"Zone '{zone.name[:-1]}' not found in view: '{self._nb_view}'")
+            self.log.error(f"Zone '{zone.name[:-1]}' not found in view: '{self.nb_view}'")
             raise LookupError
 
-        nb_records = self._api.plugins.netbox_dns.records.filter(zone_id=nb_zone.id)
+        nb_records = self.api.plugins.netbox_dns.records.filter(zone_id=nb_zone.id)
         for nb_record in nb_records:
             self.log.debug(f"{nb_record.name!r} {nb_record.type!r} {nb_record.value!r}")
 

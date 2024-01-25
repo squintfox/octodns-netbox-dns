@@ -31,6 +31,12 @@ providers:
 
 ## install
 
+### via pip
+
+```bash
+pip install octodns-netbox-dns
+```
+
 ### via pip + git
 
 ```bash
