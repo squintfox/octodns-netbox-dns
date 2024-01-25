@@ -204,7 +204,7 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
                 }
 
             case "SOA":
-                self.log.warning("SOA record type not implemented")
+                self.log.debug("SOA record type not implemented")
                 raise NotImplementedError
 
             case _:
@@ -275,10 +275,12 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
         @param target: when `True`, load the current state of the provider.
         @param lenient: when `True`, skip record validation and do a "best effort" load of data.
         """
-        self.log.info(f"populate -> name={zone.name}, target={target}, lenient={lenient}")
+        self.log.info(f"populate -> '{zone.name}', target={target}, lenient={lenient}")
 
         records = self._format_nb_records(zone)
         for data in records:
+            if len(data["values"]) == 1:
+                data["value"] = data.pop("values")[0]
             record = octodns.record.Record.new(
                 zone=zone,
                 name=data["name"],
@@ -288,4 +290,4 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
             )
             zone.add_record(record, lenient=lenient, replace=self.replace_duplicates)
 
-        self.log.info(f"populate -> found {len(zone.records)} records for zone {zone.name}")
+        self.log.info(f"populate -> found {len(zone.records)} records for zone '{zone.name}'")
