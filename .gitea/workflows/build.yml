@@ -1,0 +1,16 @@
+name: build and publish
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-pypackage:
+    uses: actions/workflows/.gitea/workflows/build_pypackage.yml@master
+    secrets:
+      username: __token__
+      token: ${{ secrets.PACKAGE_TOKEN }}

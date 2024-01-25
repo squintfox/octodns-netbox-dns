@@ -1,4 +1,4 @@
-name: check/lint python code with hatch
+name: check code
 
 on:
   push:
@@ -8,17 +8,7 @@ on:
     branches: [main, master]
 
 jobs:
-  check-python-hatch:
-    runs-on: python311
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v3
-
-      - name: install hatch
-        run: pip install -U hatch
-
-      - name: test codestyle
-        run: hatch run lint:style
-
-      - name: test typing
-        run: hatch run lint:typing
+  check-code:
+    uses: actions/workflows/.gitea/workflows/check_python_hatch.yml@master
+    with:
+      run-tests: false
