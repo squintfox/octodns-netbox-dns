@@ -17,6 +17,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
     SUPPORTS_GEO = False
     SUPPORTS_DYNAMIC = False
+    SUPPORTS_ROOT_NS = True
     SUPPORTS: set[str] = {  # noqa
         "A",
         "AAAA",
