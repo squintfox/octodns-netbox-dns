@@ -337,6 +337,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                             raise ValueError
 
                     for value in new:
+                        self.log.debug(f"NAME: {name}")
                         nb_record = self.api.plugins.netbox_dns.records.create(
                             zone=nb_zone.id,
                             name=name.replace('\\', ''),
