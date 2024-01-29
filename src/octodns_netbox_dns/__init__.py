@@ -209,7 +209,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                 }
 
             case "SPF" | "TXT":
-                value = raw_value #.replace(";", r"\;")
+                value = raw_value.replace("\\\\", "\\")
 
             case "SRV":
                 value = {
