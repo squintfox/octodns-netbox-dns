@@ -311,7 +311,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
             f"_apply: zone={plan.desired.name}, len(changes)={len(plan.changes)}"
         )
 
-        nb_zone = self._get_nb_zone(plan.desired.name, view=self._nb_view)
+        nb_zone = self._get_nb_zone(plan.desired.name, view=self.nb_view)
 
         for change in plan.changes:
             match change:
@@ -329,7 +329,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                             raise ValueError
 
                     for value in new:
-                        nb_record = self._api.plugins.netbox_dns.records.create(
+                        nb_record = self.api.plugins.netbox_dns.records.create(
                             zone=nb_zone.id,
                             name=name,
                             type=change.new._type,
@@ -344,7 +344,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                     if name == "":
                         name = "@"
 
-                    nb_records = self._api.plugins.netbox_dns.records.filter(
+                    nb_records = self.api.plugins.netbox_dns.records.filter(
                         zone_id=nb_zone.id,
                         name=change.existing.name,
                         type=change.existing._type,
@@ -376,7 +376,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                     if name == "":
                         name = "@"
 
-                    nb_records = self._api.plugins.netbox_dns.records.filter(
+                    nb_records = self.api.plugins.netbox_dns.records.filter(
                         zone_id=nb_zone.id,
                         name=name,
                         type=change.existing._type,
