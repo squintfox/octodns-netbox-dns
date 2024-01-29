@@ -58,6 +58,8 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         ttl=3600,
         replace_duplicates=False,
         make_absolute=False,
+        *args,
+        **kwargs,
     ):
         """
         Initialize the NetboxDNSSource
@@ -66,7 +68,11 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         self.log.debug(
             f"__init__: {id=}, {url=}, {view=}, {replace_duplicates=}, {make_absolute=}"
         )
-        super().__init__(id)
+        super().__init__(
+            id,
+            *args,
+            **kwargs,
+        )
 
         self.api = pynetbox.core.api.Api(url, token)
         self.nb_view = self._get_nb_view(view)
