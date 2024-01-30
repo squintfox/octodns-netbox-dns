@@ -209,7 +209,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                 }
 
             case "SPF" | "TXT":
-                value = raw_value.replace(";", "\\;")
+                value = raw_value.replace("\\\\", "\\").replace(";", "\\;")
 
             case "SRV":
                 value = {
@@ -254,7 +254,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         for nb_record in nb_records:
             rcd_name: str = nb_record.name if nb_record.name != "@" else ""
             raw_value: str = (
-                nb_record.value.replace("\\\\", "\\")
+                nb_record.value
                 if nb_record.value != "@"
                 else nb_record.zone.name
             )
