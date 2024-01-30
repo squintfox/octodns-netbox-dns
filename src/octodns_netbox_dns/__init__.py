@@ -254,9 +254,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         for nb_record in nb_records:
             rcd_name: str = nb_record.name if nb_record.name != "@" else ""
             raw_value: str = (
-                nb_record.value
-                if nb_record.value != "@"
-                else nb_record.zone.name
+                nb_record.value if nb_record.value != "@" else nb_record.zone.name
             )
             rcd_type: str = nb_record.type
             rcd_ttl: int = nb_record.ttl or nb_zone.default_ttl
@@ -343,13 +341,17 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
                     for value in new:
                         self.log.debug(f"1: value={value}")
-                        self.log.debug("1: value={}".format(value.replace("\\;", ";")))
+                        self.log.debug(
+                            "1: value={}".format(
+                                value.replace("\\\\", "\\").replace("\\;", ";")
+                            )
+                        )
                         nb_record = self.api.plugins.netbox_dns.records.create(
                             zone=nb_zone.id,
                             name=name,
                             type=change.new._type,
                             ttl=change.new.ttl,
-                            value=value.replace("\\;", ";"),
+                            value=value.replace("\\\\", "\\").replace("\\;", ";"),
                             disable_ptr=True,
                         )
                         self.log.debug(f"{nb_record!r}")
@@ -428,12 +430,16 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
                     for value in create:
                         self.log.debug(f"2: value={value}")
-                        self.log.debug("2: value={}".format(value.replace("\\;", ";")))
+                        self.log.debug(
+                            "2: value={}".format(
+                                value.replace("\\\\", "\\").replace("\\;", ";")
+                            )
+                        )
                         nb_record = self.api.plugins.netbox_dns.records.create(
                             zone=nb_zone.id,
                             name=name,
                             type=change.new._type,
                             ttl=change.new.ttl,
-                            value=value.replace("\\;", ";"),
+                            value=value.replace("\\\\", "\\").replace("\\;", ";"),
                             disable_ptr=True,
                         )
