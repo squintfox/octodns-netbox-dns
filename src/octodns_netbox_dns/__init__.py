@@ -342,6 +342,8 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                             raise ValueError
 
                     for value in new:
+                        self.log.debug(f"1: value={value}")
+                        self.log.debug("1: value={}".format(value.replace("\\;", ";")))
                         nb_record = self.api.plugins.netbox_dns.records.create(
                             zone=nb_zone.id,
                             name=name,
@@ -425,6 +427,8 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                             nb_record.save()
 
                     for value in create:
+                        self.log.debug(f"2: value={value}")
+                        self.log.debug("2: value={}".format(value.replace("\\;", ";")))
                         nb_record = self.api.plugins.netbox_dns.records.create(
                             zone=nb_zone.id,
                             name=name,
