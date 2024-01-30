@@ -346,7 +346,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                             name=name,
                             type=change.new._type,
                             ttl=change.new.ttl,
-                            value=value.replace("\\;", ";").replace("\\", ""),
+                            value=value.replace("\\;", ";"),
                             disable_ptr=True,
                         )
                         self.log.debug(f"{nb_record!r}")
