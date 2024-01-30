@@ -273,14 +273,14 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
             self.log.debug(f"record data={rcd_data}")
 
             rdata = dns.rdata.from_text("IN", nb_record.type, raw_value)
-            self.log.debug(f"rdata={rdata}")
+            # self.log.debug(f"rdata={rdata}")
             try:
                 rcd_value = self._format_rdata(rdata, raw_value)
             except NotImplementedError:
                 continue
             except Exception as exc:
                 raise exc
-            self.log.debug(f"rcd_data={rcd_data}")
+            # self.log.debug(f"rcd_data={rcd_data}")
             if (rcd_name, rcd_type) not in records:
                 records[(rcd_name, rcd_type)] = rcd_data
 
@@ -430,6 +430,6 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                             name=name,
                             type=change.new._type,
                             ttl=change.new.ttl,
-                            value=value,
+                            value=value.replace("\\;", ";"),
                             disable_ptr=True,
                         )
