@@ -13,6 +13,8 @@ jobs:
     uses: actions/workflows/.gitea/workflows/release_pypackage_github.yml@master
     with:
       repository: main
+      gh-owner: olofvndrhr
+      gh-repo: octodns-netbox-dns
     secrets:
       username: __token__
       token: ${{ secrets.PACKAGE_TOKEN }}
