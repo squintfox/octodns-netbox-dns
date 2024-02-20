@@ -20,3 +20,5 @@ jobs:
 
   update-changelog:
     uses: actions/workflows/.gitea/workflows/update_changelog.yml@master
+    with:
+      branch: main
