@@ -2,7 +2,13 @@ colors: true
 no_tty: false
 
 pre-commit:
-  scripts:
-    "format.sh":
+  commands:
+    01_ruff_check:
       stage_fixed: true
-      runner: bash
+      glob: "*.py"
+      run: ruff check --fix-only --exit-zero --silent {all_files}
+
+    02_ruff_format:
+      stage_fixed: true
+      glob: "*.py"
+      run: ruff format {all_files}
