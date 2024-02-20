@@ -231,7 +231,7 @@ class NetBoxDNSSource(octodns.source.base.BaseSource):
             raise LookupError
 
         nb_records: pynetbox.core.response.RecordSet = self.api.plugins.netbox_dns.records.filter(
-            zone_id=nb_zone.id
+            zone_id=nb_zone.id, status="active"
         )
         for nb_record in nb_records:
             rcd_name: str = nb_record.name if nb_record.name != "@" else ""
