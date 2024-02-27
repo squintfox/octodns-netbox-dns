@@ -378,6 +378,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                                 self.log.debug(
                                     f"{nb_record.url} {nb_record.endpoint.url}"
                                 )
+                                nb_record.update({'status': 'inactive'})
                                 nb_record.delete()
 
                 case octodns.record.Update():
@@ -415,8 +416,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
                     for nb_record in nb_records:
                         if nb_record.value in delete:
-                            self.log.debug(nb_record)
-                            self.log.debug(nb_record.update({'status': 'inactive'}))
+                            nb_record.update({'status': 'inactive'})
                             nb_record.delete()
                         if nb_record.value in update:
                             nb_record.ttl = change.new.ttl
